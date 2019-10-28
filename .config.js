@@ -12,6 +12,6 @@ module.exports = {
     name: 'rmonkey'
   },
   auth: {
-    autoReg: true
+    autoReg: false
   }
 }

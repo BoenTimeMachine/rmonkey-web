@@ -20,9 +20,10 @@ export class DBService {
     this.ready = this.initialize(options);
   }
 
-  collection<TName extends keyof NameToCollectionDocumentSchemaDict>(
+  async collection<TName extends keyof NameToCollectionDocumentSchemaDict>(
     name: TName
-  ): Collection<NameToCollectionDocumentSchemaDict[TName]> {
+  ): Promise<Collection<NameToCollectionDocumentSchemaDict[TName]>> {
+    await this.ready;
     return this.db.collection(name);
   }
 

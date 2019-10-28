@@ -4,23 +4,291 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Document</title>
-  </head>
-  <body>
-    <input id="msg" type="text" />
-    <button onclick="send()">发送</button>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
-    <script src="./client.js"></script>
-    <script>
-      function send() {
-        socket.emit(
-          "msg:send",
-          { content: msg.value, to: "5dac6cf8d169824710fc0939" },
-          console.log
-        );
+    <title>数据面板 - 虹猴数据端</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Roboto:400,700"
+    />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/templatemo-style.css" />
+    <style>
+      #nav {
+        display: flex;
+        align-items: center;
+        line-height: 90px;
       }
 
-      socket.emit("msg:list");
+      #nav > * {
+        display: inline-block;
+      }
+
+      #nav,
+      #data,
+      #login {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body id="reportsPage">
+    <div id="home">
+      <nav class="navbar navbar-expand-xl">
+        <div id="nav" class="container h-100">
+          <a class="navbar-brand" href="index.html">
+            <p class="text-white mt-5 mb-5" style="margin: 0!important;">
+              当前账户： <b id="account"></b> 监听群聊：<span
+                id="group"
+              ></span></p
+          ></a>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a
+                class="nav-link d-block"
+                href="javascript:localStorage.removeItem('rmonkey');location.reload()"
+              >
+                <b>退出登录</b>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div id="data" class="container">
+        <div class="row tm-content-row">
+          <div class="col-12 tm-block-col">
+            <div
+              class="tm-bg-primary-dark tm-block tm-block-taller tm-block-scroll"
+            >
+              <div>
+                <table id="list" class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">数字</th>
+                      <th scope="col"></th>
+                      <th scope="col"></th>
+                      <th scope="col"></th>
+                      <th scope="col"></th>
+                      <th scope="col"></th>
+                      <th scope="col"></th>
+                      <th scope="col"></th>
+                      <th scope="col"></th>
+                      <th scope="col"></th>
+                      <th scope="col"></th>
+                      <th scope="col">累计次数</th>
+                      <th scope="col">频率</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="login" class="container tm-mt-big tm-mb-big">
+        <div class="row">
+          <div class="col-12 mx-auto tm-login-col">
+            <div class="tm-bg-primary-dark tm-block tm-block-h-auto">
+              <div class="row">
+                <div class="col-12 text-center">
+                  <h2 class="tm-block-title mb-4">
+                    请登录
+                  </h2>
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-12">
+                  <form
+                    id="login-form"
+                    action="index.html"
+                    method="post"
+                    class="tm-login-form"
+                  >
+                    <div class="form-group">
+                      <label for="username">用户名</label>
+                      <input
+                        name="username"
+                        type="text"
+                        class="form-control validate"
+                        id="username"
+                        value=""
+                        required
+                      />
+                    </div>
+                    <div class="form-group mt-3">
+                      <label for="password">密码</label>
+                      <input
+                        name="password"
+                        type="password"
+                        class="form-control validate"
+                        id="pass"
+                        value=""
+                        required
+                      />
+                    </div>
+                    <div class="form-group mt-4">
+                      <button
+                        id="loginButton"
+                        type="submit"
+                        class="btn btn-primary btn-block text-uppercase"
+                      >
+                        登录
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- <footer class="tm-footer row tm-mt-small">
+        <div class="col-12 font-weight-light">
+          <p class="text-center text-white mb-0 px-4 small">
+            Copyright &copy; <b>2019</b>
+            Foya ltd
+          </p>
+        </div>
+      </footer> -->
+    </div>
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
+    <script>
+      const socket = io("localhost:9710", { path: "/ws" });
+      let currentData = [];
+
+      if (!localStorage.rmonkey) {
+        $("#login").show();
+      } else {
+        login(true);
+      }
+
+      $("#loginButton").click(function(event) {
+        event.preventDefault();
+        login();
+      });
+
+      function login(local) {
+        let account;
+        let password;
+
+        if (local) {
+          let info = localStorage.rmonkey.split("::::");
+          account = info[0];
+          password = info[1];
+        } else {
+          account = username.value;
+          password = pass.value;
+        }
+
+        socket.emit("login", { account: account, password: password }, function(
+          res
+        ) {
+          if (res) {
+            localStorage.rmonkey = account + "::::" + password;
+
+            console.log(res);
+
+            $("#login").hide();
+            $("#data").show();
+            $("#nav").show();
+            $("#account").text(account);
+            $("#group").text(res.group);
+
+            getList();
+          } else {
+            localStorage.removeItem("rmonkey");
+
+            $("#login").show();
+            $("#data").hide();
+            $("#nav").hide();
+          }
+        });
+      }
+
+      function getList() {
+        renderList();
+        socket.emit("list", function(list) {
+          console.log(list);
+          currentData = list;
+          renderList();
+        });
+      }
+
+      function getHistory() {
+        socket.emit("history", function(list) {
+          console.log(list);
+        });
+      }
+
+      function renderList() {
+        let l = currentData.map(({ time, data }) => {
+          let d = { time };
+
+          for (let i of data) {
+            d[i] = d[i] ? d[i] + 1 : 1;
+          }
+          return d;
+        });
+
+        let tableDom = "";
+
+        let rest = 10 - l.length;
+
+        for (let i = 0; i < 10; i++) {
+          tableDom += `
+            <tr>
+                <th scope="row"><b>${i}</b></th>
+                ${Array(rest)
+                  .fill(undefined)
+                  .map(i => "<td>-</td>")
+                  .join("")}
+                ${l.map(item => `<td>${item[i] || ""}</td>`).join("")}
+                <td>${l.reduce((c, item) => c + (item[i] || 0), 0)}</td>
+                    <td>${l.reduce((c, item) => (item[i] ? c + 1 : c), 0)}</td>
+          </tr>
+            `;
+        }
+
+        tableDom += `
+        <tr>
+            <th scope="row"><b>时间</b></th>
+            ${Array(rest)
+              .fill(undefined)
+              .map(i => "<td>-</td>")
+              .join("")}
+              ${l.map(item => `<td>${item ? item.time : "\\"}</td>`).join("")}
+              <td>\\</td>
+              <td>\\</td>
+          </tr>
+        `;
+
+        $("#list tbody").html(tableDom);
+      }
+
+      socket.on("group", function(data) {
+        $("#group").text(data.group);
+      });
+
+      socket.on("msg", function(msg) {
+        if (currentData.length >= 10) {
+          currentData.shift();
+        }
+
+        msg.data = msg.data.map(item => item.slice(-1));
+        msg.time = msg.time.split(" ")[1];
+        currentData.push(msg);
+        renderList();
+      });
+
+      // function send() {
+      //   socket.emit(
+      //     "msg:send",
+      //     { content: msg.value, to: "5dac6cf8d169824710fc0939" },
+      //     console.log
+      //   );
+      // }
+
+      // socket.emit("msg:list");
     </script>
   </body>
 </html>

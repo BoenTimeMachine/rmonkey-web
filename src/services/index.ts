@@ -4,3 +4,4 @@ export * from "./http-service";
 export * from "./socket-service";
 export * from "./message-service";
 export * from "./auth-service";
+export * from "./manager-service";

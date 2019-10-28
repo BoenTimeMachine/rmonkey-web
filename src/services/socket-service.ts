@@ -1,7 +1,7 @@
 import socketIO, { Server as SocketServer, Socket } from "socket.io";
 import { HttpService } from "./http-service";
 import { AuthService, AuthOptions } from "./auth-service";
-import { User, UserId } from "../models";
+import { User } from "../models";
 import { Nominal } from "tslang";
 
 export type SocketId = Nominal<string, "socket-id">;
@@ -19,12 +19,7 @@ export type SocketEventListener = (
 
 export interface SocketInfo {
   socket: Socket;
-  user: {
-    id: UserId;
-    account: User["account"];
-    csr: User["csr"];
-    inChatUser?: UserId;
-  };
+  user: User;
 }
 
 export class SocketService {
@@ -34,12 +29,15 @@ export class SocketService {
 
   private onlineUserMap: Map<SocketId, SocketInfo> = new Map();
 
-  get userToSocketMap(): Map<UserId, Socket> {
+  get userToSocketMap(): Map<User, Socket> {
     return new Map(
-      [...this.onlineUserMap].map(([, { socket, user: { id } }]) => [
-        id,
-        socket
-      ])
+      [...this.onlineUserMap].map(([, { socket, user }]) => [user, socket])
+    );
+  }
+
+  get accountToUserMap(): Map<string, User> {
+    return new Map(
+      [...this.userToSocketMap].map(([user]) => [user.account, user])
     );
   }
 
@@ -106,15 +104,9 @@ export class SocketService {
     const user = await this.authService.login(options);
 
     if (user) {
-      const { account, csr } = options;
-
       this.onlineUserMap.set(socket.id as SocketId, {
         socket,
-        user: {
-          id: user._id.toHexString() as UserId,
-          account,
-          csr
-        }
+        user
       });
 
       for (const [event, listener] of this.eventMap) {
@@ -122,6 +114,6 @@ export class SocketService {
       }
     }
 
-    callback(!!user);
+    callback(user);
   };
 }

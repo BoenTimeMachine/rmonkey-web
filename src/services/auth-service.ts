@@ -1,11 +1,10 @@
 import { DBService } from "./db-service";
-import { User } from "../models";
+import { User, UserId } from "../models";
 import { ObjectId } from "mongodb";
 
 export interface AuthOptions {
   account: User["account"];
   password: User["password"];
-  csr: User["csr"];
 }
 
 export interface AuthServiceOptions {
@@ -18,16 +17,16 @@ export class AuthService {
     private config: AuthServiceOptions
   ) {}
 
-  async login({ account, password, csr }: AuthOptions): Promise<User | false> {
-    if (!account || !password || typeof csr !== "boolean") {
+  async login({ account, password }: AuthOptions): Promise<User | false> {
+    if (!account || !password) {
       return false;
     }
 
-    const collection = this.dbService.collection("users");
+    const collection = await this.dbService.collection("users");
 
     const user = await collection.findOne({
       account,
-      csr
+      password
     });
 
     if (user) {
@@ -43,12 +42,10 @@ export class AuthService {
     const {
       ops: [newUser]
     } = await collection.insertOne({
-      _id: new ObjectId(),
+      id: new ObjectId().toHexString() as UserId,
       account,
-      username: account,
       password,
-      csr,
-      chat: {}
+      group: ""
     });
 
     return newUser;
