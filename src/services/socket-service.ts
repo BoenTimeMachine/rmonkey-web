@@ -27,7 +27,7 @@ export class SocketService {
 
   private eventMap: Map<string, SocketEventListener> = new Map();
 
-  private onlineUserMap: Map<SocketId, SocketInfo> = new Map();
+  onlineUserMap: Map<SocketId, SocketInfo> = new Map();
 
   get userToSocketMap(): Map<User, Socket> {
     return new Map(

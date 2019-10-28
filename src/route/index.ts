@@ -10,8 +10,6 @@ export function buildRoutes(managerService: ManagerService): Router {
       const dbService = managerService.getService("dbService");
       const token = ctx.header.authorization;
 
-      console.log(token);
-
       if (!token) {
         return;
       }
@@ -44,10 +42,6 @@ export function buildRoutes(managerService: ManagerService): Router {
           password,
           group: ""
         });
-      }
-
-      if (!user) {
-        // return;
       }
 
       ctx.header.account = account;

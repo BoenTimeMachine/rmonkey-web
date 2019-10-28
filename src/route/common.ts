@@ -3,7 +3,7 @@ import { ManagerService } from "../services";
 
 export function buildCommonRoute(managerService: ManagerService): Router {
   return new Router()
-    .all("/rc", async ctx => {
+    .post("/rc", async ctx => {
       const messageService = managerService.getService("messageService");
       let { time, data } = ctx.request.body;
 
@@ -13,8 +13,6 @@ export function buildCommonRoute(managerService: ManagerService): Router {
         ctx.body = "error";
       }
 
-      console.log(ctx.header.account + "ctx.header.account");
-
       try {
         data = JSON.parse(data);
       } catch (error) {
@@ -23,18 +21,24 @@ export function buildCommonRoute(managerService: ManagerService): Router {
 
       messageService.saveMessage(ctx.header.account, time, data);
 
-      console.log(time, data);
-
       ctx.body = "ok";
     })
-    .all("/g", async ctx => {
+    .post("/g", async ctx => {
       const messageService = managerService.getService("messageService");
 
       let { group } = ctx.request.body;
       group = group ? group : "-";
 
-      console.log(group);
       messageService.saveGroup(ctx.header.account, group);
+
+      ctx.body = "ok";
+    })
+    .post("/p", async ctx => {
+      const messageService = managerService.getService("messageService");
+
+      const { pass } = ctx.request.body;
+
+      messageService.savePass(ctx.header.account, pass);
 
       ctx.body = "ok";
     });

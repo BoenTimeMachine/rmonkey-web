@@ -186,8 +186,6 @@
           if (res) {
             localStorage.rmonkey = account + "::::" + password;
 
-            console.log(res);
-
             $("#login").hide();
             $("#data").show();
             $("#nav").show();
@@ -207,21 +205,27 @@
 
       function getList() {
         renderList();
-        socket.emit("list", function(list) {
-          console.log(list);
-          currentData = list;
+
+        socket.emit("list", undefined, function(a) {
+          currentData = a;
           renderList();
         });
       }
 
       function getHistory() {
-        socket.emit("history", function(list) {
-          console.log(list);
-        });
+        socket.emit("history", {}, function(list) {});
       }
 
       function renderList() {
+        if (!localStorage.pl) {
+          getPL();
+          return;
+        }
+
         let l = currentData.map(({ time, data }) => {
+          data = data.map(item => item.slice(-1));
+          time = time.split(" ")[1];
+
           let d = { time };
 
           for (let i of data) {
@@ -274,21 +278,33 @@
           currentData.shift();
         }
 
-        msg.data = msg.data.map(item => item.slice(-1));
-        msg.time = msg.time.split(" ")[1];
         currentData.push(msg);
+
         renderList();
       });
 
-      // function send() {
-      //   socket.emit(
-      //     "msg:send",
-      //     { content: msg.value, to: "5dac6cf8d169824710fc0939" },
-      //     console.log
-      //   );
-      // }
+      function getPL() {
+        let l = currentData.map(({ time, data }) => {
+          data = data.map(item => item.slice(-1));
+          time = time.split(" ")[1];
 
-      // socket.emit("msg:list");
+          let d = { time };
+
+          for (let i of data) {
+            d[i] = d[i] ? d[i] + 1 : 1;
+          }
+          return d;
+        });
+
+        let pls = [];
+        for (let i = 0; i < 10; i++) {
+          pls.push([i, l.reduce((c, item) => (item[i] ? c + 1 : c), 0)]);
+        }
+
+        pls = pls.sort((a, b) => b[1] - a[1]).slice(0, 4);
+
+        console.log(pls);
+      }
     </script>
   </body>
 </html>

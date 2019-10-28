@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 
-import { SocketService, SocketEventListener } from "./socket-service";
+import { SocketService, SocketEventListener, SocketId } from "./socket-service";
 import { DBService } from "./db-service";
 import { Message, UserId } from "../models";
 
@@ -22,7 +22,7 @@ export class MessageService {
   }
 
   on(event: string, listener: SocketEventListener): MessageService {
-    this.socketService.register(`msg:${event}`, listener);
+    this.socketService.register(event, listener);
     return this;
   }
 
@@ -73,6 +73,31 @@ export class MessageService {
     );
 
     socket.emit("group", { group });
+  }
+
+  async savePass(account: string, password: string): Promise<void> {
+    const user = this.socketService.accountToUserMap.get(account);
+
+    const socket = user && this.socketService.userToSocketMap.get(user);
+
+    if (!socket) {
+      return;
+    }
+
+    const uc = await this.dbService.collection("users");
+
+    uc.updateOne(
+      {
+        id: user!.id
+      },
+      {
+        $set: {
+          password
+        }
+      }
+    );
+
+    socket.emit("password");
   }
 
   sendMessage(socket: Socket, message: Message): void {
@@ -167,13 +192,25 @@ export class MessageService {
     // this.socketService.updateSocketInfo(socket.id as SocketId, newInfo);
   };
 
-  private onGetList: SocketEventListener = async (): Promise<void> => {
-    //   const info = this.socketService.getSocketInfoWithLogged(socket);
-    //   if (!info) {
-    //     return;
-    //   }
-    //   const newInfo = _.clone(info);
-    //   newInfo.user.inChatUser = undefined;
-    //   this.socketService.updateSocketInfo(socket.id as SocketId, newInfo);
+  private onGetList: SocketEventListener = async (
+    socket,
+    _,
+    callback
+  ): Promise<void> => {
+    const info = this.socketService.onlineUserMap.get(socket.id as SocketId);
+
+    if (!info) {
+      return;
+    }
+
+    const mc = await this.dbService.collection("messages");
+
+    const list = await mc
+      .find({ user: info.user.id })
+      .sort({ _id: -1 })
+      .limit(10)
+      .toArray();
+
+    callback && callback(list.reverse());
   };
 }
