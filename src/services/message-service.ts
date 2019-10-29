@@ -49,7 +49,7 @@ export class MessageService {
 
     socket.emit(
       "msg",
-      new Buffer(JSON.stringify({ time, data })).toString("base64")
+      Buffer.from(JSON.stringify({ time, data })).toString("base64")
     );
   }
 
@@ -215,6 +215,6 @@ export class MessageService {
       .toArray();
 
     callback &&
-      callback(new Buffer(JSON.stringify(list.reverse())).toString("base64"));
+      callback(Buffer.from(JSON.stringify(list.reverse())).toString("base64"));
   };
 }
