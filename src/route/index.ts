@@ -14,14 +14,11 @@ export function buildRoutes(managerService: ManagerService): Router {
         return;
       }
 
-      let [account, password = "123456"] = String(token).split("::::");
+      const [account, password] = String(token).split("::::");
 
-      if (!account) {
+      if (!account || !password) {
         return;
       }
-
-      account = account;
-      password = password;
 
       const collection = await dbService!.collection("users");
 
@@ -31,12 +28,12 @@ export function buildRoutes(managerService: ManagerService): Router {
 
       if (user) {
         if (user.password !== password) {
-          return;
+          // 暂不限制
+          // return;
         }
-        // 正常
       } else {
         // 注册个新的
-        collection.insertOne({
+        await collection.insertOne({
           id: new ObjectId().toHexString() as UserId,
           account,
           password,

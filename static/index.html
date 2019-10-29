@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>数据面板 - 虹猴数据端</title>
+    <title>数据面板 - BOSS数据端</title>
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css?family=Roboto:400,700"
@@ -141,19 +141,13 @@
           </div>
         </div>
       </div>
-      <!-- <footer class="tm-footer row tm-mt-small">
-        <div class="col-12 font-weight-light">
-          <p class="text-center text-white mb-0 px-4 small">
-            Copyright &copy; <b>2019</b>
-            Foya ltd
-          </p>
-        </div>
-      </footer> -->
     </div>
+    <script src="host.js"></script>
+
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
     <script>
-      const socket = io("localhost:9710", { path: "/ws" });
+      const socket = io(_host, { path: "/ws" });
       let currentData = [];
 
       if (!localStorage.rmonkey) {
@@ -217,11 +211,6 @@
       }
 
       function renderList() {
-        if (!localStorage.pl) {
-          getPL();
-          return;
-        }
-
         let l = currentData.map(({ time, data }) => {
           data = data.map(item => item.slice(-1));
           time = time.split(" ")[1];
@@ -282,29 +271,6 @@
 
         renderList();
       });
-
-      function getPL() {
-        let l = currentData.map(({ time, data }) => {
-          data = data.map(item => item.slice(-1));
-          time = time.split(" ")[1];
-
-          let d = { time };
-
-          for (let i of data) {
-            d[i] = d[i] ? d[i] + 1 : 1;
-          }
-          return d;
-        });
-
-        let pls = [];
-        for (let i = 0; i < 10; i++) {
-          pls.push([i, l.reduce((c, item) => (item[i] ? c + 1 : c), 0)]);
-        }
-
-        pls = pls.sort((a, b) => b[1] - a[1]).slice(0, 4);
-
-        console.log(pls);
-      }
     </script>
   </body>
 </html>

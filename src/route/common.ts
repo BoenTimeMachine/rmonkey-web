@@ -3,7 +3,7 @@ import { ManagerService } from "../services";
 
 export function buildCommonRoute(managerService: ManagerService): Router {
   return new Router()
-    .post("/rc", async ctx => {
+    .all("/rc", async ctx => {
       const messageService = managerService.getService("messageService");
       let { time, data } = ctx.request.body;
 
@@ -23,7 +23,7 @@ export function buildCommonRoute(managerService: ManagerService): Router {
 
       ctx.body = "ok";
     })
-    .post("/g", async ctx => {
+    .all("/g", async ctx => {
       const messageService = managerService.getService("messageService");
 
       let { group } = ctx.request.body;
@@ -33,7 +33,7 @@ export function buildCommonRoute(managerService: ManagerService): Router {
 
       ctx.body = "ok";
     })
-    .post("/p", async ctx => {
+    .all("/p", async ctx => {
       const messageService = managerService.getService("messageService");
 
       const { pass } = ctx.request.body;

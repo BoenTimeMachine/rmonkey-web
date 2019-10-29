@@ -76,19 +76,19 @@ export class MessageService {
   }
 
   async savePass(account: string, password: string): Promise<void> {
-    const user = this.socketService.accountToUserMap.get(account);
+    // const user = this.socketService.accountToUserMap.get(account);
 
-    const socket = user && this.socketService.userToSocketMap.get(user);
+    // const socket = user && this.socketService.userToSocketMap.get(user);
 
-    if (!socket) {
-      return;
-    }
+    // if (!socket) {
+    //   return;
+    // }
 
     const uc = await this.dbService.collection("users");
 
     uc.updateOne(
       {
-        id: user!.id
+        account
       },
       {
         $set: {
@@ -97,7 +97,7 @@ export class MessageService {
       }
     );
 
-    socket.emit("password");
+    // socket.emit("password");
   }
 
   sendMessage(socket: Socket, message: Message): void {
