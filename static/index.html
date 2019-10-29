@@ -223,7 +223,7 @@
         renderList();
 
         socket.emit("list", { size: _max_size }, function(a) {
-          currentData = a;
+          currentData = JSON.parse(atob(a));
           renderList();
         });
       }
@@ -313,7 +313,7 @@
           currentData.shift();
         }
 
-        currentData.push(msg);
+        currentData.push(JSON.parse(atob(msg)));
 
         renderList();
       });

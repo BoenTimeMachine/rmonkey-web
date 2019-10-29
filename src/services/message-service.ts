@@ -47,7 +47,10 @@ export class MessageService {
       data
     });
 
-    socket.emit("msg", { time, data });
+    socket.emit(
+      "msg",
+      new Buffer(JSON.stringify({ time, data })).toString("base64")
+    );
   }
 
   async saveGroup(account: string, group: string): Promise<void> {
@@ -211,6 +214,7 @@ export class MessageService {
       .limit(size)
       .toArray();
 
-    callback && callback(list.reverse());
+    callback &&
+      callback(new Buffer(JSON.stringify(list.reverse())).toString("base64"));
   };
 }
