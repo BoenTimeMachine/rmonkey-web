@@ -96,8 +96,6 @@ export class MessageService {
         }
       }
     );
-
-    // socket.emit("password");
   }
 
   sendMessage(socket: Socket, message: Message): void {
@@ -194,7 +192,7 @@ export class MessageService {
 
   private onGetList: SocketEventListener = async (
     socket,
-    _,
+    size,
     callback
   ): Promise<void> => {
     const info = this.socketService.onlineUserMap.get(socket.id as SocketId);
@@ -203,12 +201,14 @@ export class MessageService {
       return;
     }
 
+    size = isNaN(Number(size)) ? 15 : size;
+
     const mc = await this.dbService.collection("messages");
 
     const list = await mc
       .find({ user: info.user.id })
       .sort({ _id: -1 })
-      .limit(10)
+      .limit(size)
       .toArray();
 
     callback && callback(list.reverse());

@@ -1,5 +1,6 @@
 import Router from "koa-router";
 import { ManagerService } from "../services";
+import assert from "http-assert";
 
 export function buildCommonRoute(managerService: ManagerService): Router {
   return new Router()
@@ -9,14 +10,16 @@ export function buildCommonRoute(managerService: ManagerService): Router {
 
       time = time;
 
-      if (!time || !Array.isArray(data)) {
+      if (!time) {
         ctx.body = "error";
       }
 
       try {
-        data = JSON.parse(data);
+        data = Array.isArray(data) ? data : JSON.parse(data);
+        assert(Array.isArray(data));
       } catch (error) {
-        data = [];
+        ctx.body = "error";
+        return;
       }
 
       messageService.saveMessage(ctx.header.account, time, data);

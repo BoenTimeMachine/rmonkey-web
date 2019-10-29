@@ -28,14 +28,18 @@ export class DBService {
   }
 
   private async initialize({ uri, name }: DBServiceOptions): Promise<void> {
-    const client = await MongoClient.connect(uri, {
-      useUnifiedTopology: true,
-      useNewUrlParser: true,
-      ignoreUndefined: true
-    });
+    try {
+      const client = await MongoClient.connect(uri, {
+        useUnifiedTopology: true,
+        useNewUrlParser: true,
+        ignoreUndefined: true
+      });
 
-    this.db = client.db(name);
+      this.db = client.db(name);
 
-    console.info(`MONGODB RUNNING ON ${uri} ...`);
+      console.info(`MONGODB RUNNING ON ${uri} ...`);
+    } catch (error) {
+      console.info(`MONGODB CONNECT TIMEOUT ${uri} ...`);
+    }
   }
 }

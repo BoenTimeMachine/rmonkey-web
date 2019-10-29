@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,6 +27,20 @@
       #login {
         display: none;
       }
+
+      .nnum,
+      .unum {
+        font-size: 12px;
+        vertical-align: top;
+      }
+
+      .nnum {
+        color: red;
+      }
+
+      .unum {
+        color: green;
+      }
     </style>
   </head>
 
@@ -43,6 +57,7 @@
           <ul class="navbar-nav">
             <li class="nav-item">
               <a
+                style="height: 36px;"
                 class="nav-link d-block"
                 href="javascript:localStorage.removeItem('rmonkey');location.reload()"
               >
@@ -63,6 +78,11 @@
                   <thead>
                     <tr>
                       <th scope="col">数字</th>
+                      <th scope="col">不</th>
+                      <th scope="col">记</th>
+                      <th scope="col">录</th>
+                      <th scope="col">区</th>
+                      <th scope="col">域</th>
                       <th scope="col"></th>
                       <th scope="col"></th>
                       <th scope="col"></th>
@@ -74,7 +94,7 @@
                       <th scope="col"></th>
                       <th scope="col"></th>
                       <th scope="col">累计次数</th>
-                      <th scope="col">频率</th>
+                      <th scope="col">- 频率 -</th>
                     </tr>
                   </thead>
                   <tbody></tbody>
@@ -149,6 +169,8 @@
     <script>
       const socket = io(_host, { path: "/ws" });
       let currentData = [];
+      let times = Array(10).fill(0);
+      let ass = Array(10).fill(0);
 
       if (!localStorage.rmonkey) {
         $("#login").show();
@@ -200,7 +222,7 @@
       function getList() {
         renderList();
 
-        socket.emit("list", undefined, function(a) {
+        socket.emit("list", { size: _max_size }, function(a) {
           currentData = a;
           renderList();
         });
@@ -211,23 +233,41 @@
       }
 
       function renderList() {
-        let l = currentData.map(({ time, data }) => {
-          data = data.map(item => item.slice(-1));
-          time = time.split(" ")[1];
+        let l = currentData
+          .map(({ time, data }) => {
+            if ((new Date() - new Date(time)) / 1000 / 60 > _before_min) {
+              return undefined;
+            }
 
-          let d = { time };
+            data = data.map(item => item.slice(-1));
+            time = time.split(" ")[1];
 
-          for (let i of data) {
-            d[i] = d[i] ? d[i] + 1 : 1;
-          }
-          return d;
-        });
+            let d = { time };
+
+            for (let i of data) {
+              d[i] = d[i] ? d[i] + 1 : 1;
+            }
+            return d;
+          })
+          .filter(i => i);
 
         let tableDom = "";
 
-        let rest = 10 - l.length;
+        let rest = _max_size - l.length;
 
         for (let i = 0; i < 10; i++) {
+          let ot = times[i];
+          times[i] = l.reduce(
+            (c, item, idx) => (idx >= 10 ? c : c + (item[i] || 0)),
+            0
+          );
+
+          let oa = ass[i];
+          ass[i] = l.reduce(
+            (c, item, idx) => (idx >= 10 ? c : item[i] ? c + 1 : c),
+            0
+          );
+
           tableDom += `
             <tr>
                 <th scope="row"><b>${i}</b></th>
@@ -236,8 +276,14 @@
                   .map(i => "<td>-</td>")
                   .join("")}
                 ${l.map(item => `<td>${item[i] || ""}</td>`).join("")}
-                <td>${l.reduce((c, item) => c + (item[i] || 0), 0)}</td>
-                    <td>${l.reduce((c, item) => (item[i] ? c + 1 : c), 0)}</td>
+                <td>${times[i]} <span class="${
+            times[i] - ot >= 0 ? "unum" : "nnum"
+          }">${
+            times[i] - ot >= 0 ? `+${times[i] - ot}` : times[i] - ot
+          }</span></td>
+                    <td>${ass[i]} <span  class="${
+            ass[i] - oa >= 0 ? "unum" : "nnum"
+          }"> ${ass[i] - oa >= 0 ? `+${ass[i] - oa}` : ass[i] - oa}</span></td>
           </tr>
             `;
         }
@@ -263,7 +309,7 @@
       });
 
       socket.on("msg", function(msg) {
-        if (currentData.length >= 10) {
+        if (currentData.length >= _max_size) {
           currentData.shift();
         }
 

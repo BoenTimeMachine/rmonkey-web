@@ -394,20 +394,28 @@ thead {
 .table td,
 .table th {
   font-size: 18px;
-  width: 7.6%;
+  width: 5.54%;
   border-top: 1px solid rgba(221, 221, 221, 0.32);
   border-right: 1px solid rgba(221, 221, 221, 0.32);
   background-color: rgba(255, 255, 255, 0.9);
   color: #333;
-  padding: 10px 4px;
+  padding: 8px 0;
   vertical-align: middle;
   text-align: center;
   white-space: nowrap;
   cursor: pointer;
 }
 
+.table td:nth-child(n + 2) {
+  background-color: #ddd;
+}
+
+.table td:nth-child(n + 7) {
+  background-color: #fff;
+}
+
 .table td:hover {
-  background-color: #415a70;
+  background-color: #ddd;
   color: #fff;
 }
 
