@@ -406,12 +406,23 @@ thead {
   cursor: pointer;
 }
 
-.table td:nth-child(n + 2) {
+#list.table td:nth-child(n + 2) {
   background-color: #ddd;
 }
 
-.table td:nth-child(n + 7) {
+#list.table td:nth-child(n + 7) {
   background-color: #fff;
+}
+
+#best td,
+#unlucky td {
+  font-size: 12px;
+}
+
+td i {
+  font-size: 22px;
+  font-weight: solid;
+  font-style: normal;
 }
 
 .table td:hover {

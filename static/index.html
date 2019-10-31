@@ -102,6 +102,24 @@
               </div>
             </div>
           </div>
+
+          <h5 style="color: aliceblue;padding: 10px;">
+            ()中为连续出现或连续未出现次数，[] 为上方累计次数
+          </h5>
+          <table id="best" class="table">
+            <tbody>
+              <tr>
+                <th>最佳数字</th>
+              </tr>
+            </tbody>
+          </table>
+          <table id="unlucky" class="table">
+            <tbody>
+              <tr>
+                <th>黑色数字</th>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
       <div id="login" class="container tm-mt-big tm-mb-big">
@@ -171,6 +189,13 @@
       let currentData = [];
       let times = Array(10).fill(0);
       let ass = Array(10).fill(0);
+      let lucky;
+
+      try {
+        lucky = JSON.parse(localStorage.rm_lucky);
+      } catch (error) {
+        lucky = Array(10).fill(0);
+      }
 
       if (!localStorage.rmonkey) {
         $("#login").show();
@@ -302,6 +327,64 @@
         `;
 
         $("#list tbody").html(tableDom);
+
+        let best = [];
+        let unlucky = [];
+
+        for (let i in lucky) {
+          best.push({
+            num: i,
+            times: lucky[i],
+            count: times[i],
+          });
+
+          unlucky.push({
+            num: i,
+            times: lucky[i],
+            count: times[i],
+          });
+        }
+
+        best.sort(({ times: ta, count: ca }, { times: tb, count: cb }) => {
+          if (ta < tb) {
+            return -1;
+          } else if (ta == tb) {
+            return cb - ca;
+          } else {
+            return 1;
+          }
+        });
+
+        unlucky.sort(({ times: ta, count: ca }, { times: tb, count: cb }) => {
+          if (ta > tb) {
+            return -1;
+          } else if (ta == tb) {
+            return cb - ca;
+          } else {
+            return 1;
+          }
+        });
+
+        $("#best tbody").html(
+          "<th>最佳数字</th>" +
+            best
+              .map(
+                ({ num, times, count }) =>
+                  `<td><i>${num}</i>(${
+                    times > 0 ? 0 : Math.abs(times)
+                  })[${count}]</td>`
+              )
+              .join()
+        );
+        $("#unlucky tbody").html(
+          "<th>黑色数字</th>" +
+            unlucky
+              .map(
+                ({ num, times, count }) =>
+                  `<td><i>${num}</i>(${times < 0 ? 0 : times})[${count}]</td>`
+              )
+              .join()
+        );
       }
 
       socket.on("group", function(data) {
@@ -313,7 +396,22 @@
           currentData.shift();
         }
 
-        currentData.push(JSON.parse(atob(msg)));
+        msg = JSON.parse(atob(msg));
+        currentData.push(msg);
+
+        // best & unlucky
+
+        let dataSet = new Set(msg.data.map(item => item.slice(-1)));
+
+        for (let i in lucky) {
+          if (dataSet.has(i)) {
+            lucky[i] = Math.max(lucky[i], 0) + 1;
+          } else {
+            lucky[i] = Math.min(lucky[i], 0) - 1;
+          }
+        }
+
+        localStorage.rm_lucky = JSON.stringify(lucky);
 
         renderList();
       });
